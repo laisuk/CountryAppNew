@@ -1,10 +1,11 @@
-﻿using System;
+﻿using HttpProgressBar;
+using System;
 using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+using System.IO;
+using System.Net.Http;
+using System.Text;
 using System.Windows;
 using System.Windows.Media.Imaging;
-using System.Windows.Threading;
 
 namespace CountryAppNew
 {
@@ -87,33 +88,66 @@ namespace CountryAppNew
 
         private async void btnUpdateData_Click(object sender, RoutedEventArgs e)
         {
-            updateComplete = false;
-            CountriesList.UpdateJsonDataFile(countryFilePath);
-            var length = 500;
+            btnUpdateData.IsEnabled = false;
+            using HttpClient client = new();
 
-            await Task.Run(() =>
+            // Create a Progress<T> object and an event handler to report the progress
+            var progress = new Progress<float>();
+            progress.ProgressChanged += (sender, value) =>
             {
-                for (int i = 0; i <= length; i++)
-                {
-                    Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        btnUpdateData.IsEnabled = false;
-                        lblFileDate.Content = $"Updating...({i})";
-                    }), DispatcherPriority.Render);
+                // Display the progress percentage
+                lblFileDate.Content = $"Updating...({((int)value)}%)";
+                
+            };
 
-                    if (updateComplete)
-                    {
-                        break;
-                    }
-                    Thread.Sleep(50);
-                }
-                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            // Make an HTTP GET request to an API endpoint that returns JSON
+            // Use the HttpCompletionOption.ResponseHeadersRead option to get the headers first
+            HttpResponseMessage response = await client.GetAsync(AllCountryUrl, HttpCompletionOption.ResponseHeadersRead);
+
+            // Check if the request was successful
+            if (response.IsSuccessStatusCode)
+            {
+                // Get the content length from the headers
+                long? contentLength = response.Content.Headers.ContentLength;
+
+                // Read the response content as a stream
+                using var stream = await response.Content.ReadAsStreamAsync();
+                // Create a memory stream to store the downloaded data
+                using var memoryStream = new MemoryStream();
+                // Copy the content stream to the memory stream, reporting the progress
+                await stream.CopyToAsync(memoryStream, 81920, contentLength, progress);
+
+                // Rewind the memory stream
+                memoryStream.Position = 0;
+
+                // Read the memory stream as a string
+                using var reader = new StreamReader(memoryStream);
+                string content = reader.ReadToEnd();
+
+                try
                 {
-                    lblFileDate.Content = CountriesList.GetJsonFileDate(countryFilePath);
-                    btnUpdateData.IsEnabled = true;
-                }), DispatcherPriority.Render);
-                updateComplete = false;                
-            });
+                    File.WriteAllText(countryFilePath, content, Encoding.UTF8);
+                    lblFileDate.Content = $"Up to date.";
+                    string successMassage = $"File update SUCCESS: {countryFilePath} @ " + CountriesList.GetJsonFileDate(countryFilePath);
+                    MessageBox.Show(successMassage, "JSON Data File Update");
+                }
+                catch (Exception)
+                {
+                    lblFileDate.Content = $"Update file save error.";
+                }       
+            }
+            else
+            {
+                // Display the status code and reason phrase
+                //Console.WriteLine($"Status code: {(int)response.StatusCode}");
+                //Console.WriteLine($"Reason: {response.ReasonPhrase}");
+                lblFileDate.Content = $"Update error. \nstatus code: {(int)response.StatusCode}";
+            }
+            btnUpdateData.IsEnabled = true;
+
         }
     }
 }
+
+
+

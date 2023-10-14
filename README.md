@@ -7,3 +7,4 @@ To-do:
 	1. Update country JSON file online => done
 	2. File update progres. => done
 	3. use Reflection method => done (Removed, use Dictionary indeed)
+	3. Display data file online updating progress => done

@@ -14,7 +14,7 @@ public partial class CountriesList
         {
             var jsonText = File.ReadAllText(filePath);
             var countryData = JsonSerializer.Deserialize<List<CountryModel>>(jsonText);
-            IEnumerable<CountryModel> query = countryData!.OrderBy(x => x.name.common);
+            IEnumerable<CountryModel> query = countryData!.OrderBy(x => x.name!.common);
 
             return query.ToList();
         }
@@ -141,9 +141,11 @@ public partial class CountriesList
 
             //throw;
         }
-    }
+    }   
 
 }
+
+
 
 
 
