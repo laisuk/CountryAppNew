@@ -97,7 +97,6 @@ public partial class CountriesList
 
     public static string GetJsonFileDate(string filePath)
     {
-        //return File.GetCreationTime(filePath).ToString();
         return File.GetLastWriteTime(filePath).ToString();
     }
 
@@ -130,7 +129,6 @@ public partial class CountriesList
         try
         {
             File.WriteAllText(filePath, content);
-            MainWindow.updateComplete = true;
             string successMassage = $"File update SUCCESS: {filePath} @ " + GetJsonFileDate(filePath);
             MessageBox.Show(successMassage, "JSON Data File Update");
         }

@@ -14,11 +14,10 @@ namespace CountryAppNew
     /// </summary>
     public partial class MainWindow : Window
     {
-        public const string countryFilePath = @".\Data\all.json";
+        public static string countryFilePath = Path.Join(AppDomain.CurrentDomain.BaseDirectory, @"Data\all.json");
         public const string AllCountryUrl = @"https://restcountries.com/v3.1/all";
-        public const string JsonBackupFilePath = @".\Data\all.json.bak";
+        public static string JsonBackupFilePath = Path.Join(AppDomain.CurrentDomain.BaseDirectory, @"Data\all.json.bak");
         private static List<CountryModel> CountriesData = CountriesList.GetAllCountryData(countryFilePath);
-        public static bool updateComplete;
 
         public MainWindow()
         {
@@ -127,8 +126,9 @@ namespace CountryAppNew
                 try
                 {
                     File.WriteAllText(countryFilePath, content, Encoding.UTF8);
-                    lblFileDate.Content = $"Up to date.";
-                    string successMassage = $"File update SUCCESS: {countryFilePath} @ " + CountriesList.GetJsonFileDate(countryFilePath);
+                    lblFileDate.Content = CountriesList.GetJsonFileDate(countryFilePath);
+
+                    string successMassage = $"File update SUCCESS: {countryFilePath} @ {lblFileDate.Content}";
                     MessageBox.Show(successMassage, "JSON Data File Update");
                 }
                 catch (Exception)
